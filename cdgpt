@@ -11,7 +11,7 @@ import time
 import random
 
 # --- إعدادات MUHGPT الأساسية ---
-MUHGPT_BOT_TOKEN = 'YOUR_MUHGPT_BOT_TOKEN'  # !!! استبدل هذا بالتوكن الخاص بك يا صديقي !!!
+MUHGPT_BOT_TOKEN = '8215031641:AAEDvTzDXroq2wFlqbqIYe58BZ5kF45GKsE'  # !!! استبدل هذا بالتوكن الخاص بك يا صديقي !!!
 bot = telebot.TeleBot(MUHGPT_BOT_TOKEN)
 
 # قاموس لتخزين بيانات المستخدمين أثناء التفاعل
