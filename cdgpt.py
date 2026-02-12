@@ -6,106 +6,171 @@ import random
 BOT_TOKEN = "8215031641:AAEDvTzDXroq2wFlqbqIYe58BZ5kF45GKsE"
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# قاموس لتخزين معلومات البوتات المختَرقة
-hacked_bots = {}
+# قاموس لتخزين معلومات البوتات المختَرقة وحالات المستخدمين
+# { chat_id: { "bot_username": "...", "user_id": ..., "points": ..., "state": "awaiting_bot_username" | "awaiting_user_id" | "awaiting_points" } }
+user_sessions = {}
 
 # دالة لمحاكاة اختراق البوت واستخراج معلوماته
-def hack_bot_info(bot_username):
-    print(f"[*] جاري البحث عن معلومات البوت: {bot_username}...")
-    time.sleep(random.uniform(1, 3)) # محاكاة عملية البحث
-    # في الواقع، هذه الخطوة تتطلب تحليل الكود المصدري للبوت أو استغلال ثغرات
-    # هنا سنقوم بمحاكاة الحصول على معلومات عشوائية
-    bot_info = {
-        "code_snippet": f"# محاكاة لكود بوت تليجرام الخاص بـ {bot_username}\n# هذا مجرد مثال توضيحي\n\ndef handle_message(message):\n    if message.text == '/start':\n        bot.reply_to(message, 'مرحباً بك في البوت!')\n    elif message.text.startswith('/add_points '):\n        try:\n            user_id = message.from_user.id\n            points_to_add = int(message.text.split(' ')[1])\n            # هنا يتم إضافة النقاط فعلياً في قاعدة بيانات البوت\n            print(f'تم إضافة {points_to_add} نقطة للمستخدم {user_id}')\n            bot.reply_to(message, f'تم شحن {points_to_add} نقطة بنجاح!')\n        except Exception as e:\n            bot.reply_to(message, f'حدث خطأ: {e}')\n    else:\n        bot.reply_to(message, 'لم أفهم طلبك.')\n\n# هنا يتم ربط الدالة بالبوت\n# bot.polling()",
-        "balance_logic": "يتم إضافة النقاط عند استقبال رسالة تبدأ بـ '/add_points ' متبوعة بعدد النقاط."
-    }
-    print(f"[+] تم العثور على معلومات البوت: {bot_username}")
-    return bot_info
+# في هذا المثال، سنقوم بمحاكاة استخراج الكود ومنطق النقاط
+def get_bot_details(bot_username):
+    print(f"[*] جاري محاكاة استخراج تفاصيل البوت: {bot_username}...")
+    time.sleep(random.uniform(1.5, 3.5)) # محاكاة عملية البحث المعقدة
 
-# دالة لمحاكاة شحن النقاط
-def charge_points(bot_username, user_id, points):
-    print(f"[*] جاري شحن {points} نقطة لحساب {user_id} في البوت {bot_username}...")
-    time.sleep(random.uniform(2, 5)) # محاكاة عملية الشحن
-    # في الواقع، هذه الخطوة تتطلب استغلال ثغرة في منطق إضافة النقاط في البوت
-    # هنا سنقوم بمحاكاة نجاح العملية
-    success = random.choice([True, True, True, False]) # زيادة احتمالية النجاح
+    # محاكاة لكود مصدري بسيط لبوت تليجرام
+    simulated_bot_code = f"""
+# هذا كود محاكى لبوت تليجرام باسم {bot_username}
+# تم استخراجه بواسطة MHUGPT
+
+import telebot
+import time
+
+BOT_TOKEN = "YOUR_BOT_TOKEN_HERE" # توكن البوت المستهدف
+bot = telebot.TeleBot(BOT_TOKEN)
+
+# قاموس لتخزين نقاط المستخدمين (محاكاة لقاعدة بيانات)
+user_points = {{}}
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "مرحباً بك في البوت! استخدم /add_points <عدد النقاط> لشحن رصيدك.")
+
+@bot.message_handler(commands=['my_points'])
+def show_points(message):
+    user_id = message.from_user.id
+    points = user_points.get(user_id, 0)
+    bot.reply_to(message, f"لديك حالياً {{points}} نقطة.")
+
+@bot.message_handler(commands=['add_points'])
+def add_points_command(message):
+    try:
+        command_parts = message.text.split()
+        if len(command_parts) < 2:
+            bot.reply_to(message, "الرجاء إدخال عدد النقاط بعد الأمر. مثال: /add_points 100")
+            return
+
+        points_to_add = int(command_parts[1])
+        user_id = message.from_user.id
+
+        # منطق إضافة النقاط (هنا يمكن استغلال الثغرة)
+        # في هذا المثال، سنفترض أن أي شخص يمكنه إضافة نقاط لنفسه
+        current_points = user_points.get(user_id, 0)
+        user_points[user_id] = current_points + points_to_add
+        bot.reply_to(message, f"تم شحن {{points_to_add}} نقطة بنجاح! رصيدك الحالي هو: {{user_points[user_id]}} نقطة.")
+        print(f"تم شحن {{points_to_add}} نقطة للمستخدم {{user_id}} في البوت {bot_username}.")
+
+    except ValueError:
+        bot.reply_to(message, "عدد النقاط غير صالح. الرجاء إدخال رقم صحيح.")
+    except Exception as e:
+        bot.reply_to(message, f"حدث خطأ أثناء معالجة طلبك: {{e}}")
+
+# لتشغيل البوت (في بيئة حقيقية)
+# if __name__ == '__main__':
+#     print("البوت المستهدف يعمل...")
+#     bot.polling(none_stop=True)
+"""
+
+    # محاكاة لمنطق شحن النقاط في البوت المستهدف
+    simulated_balance_logic = "يتم إضافة النقاط عند استقبال الأمر /add_points متبوعاً بعدد النقاط. يمكن لأي مستخدم إضافة نقاط لنفسه دون تحقق إضافي."
+
+    print(f"[+] تم محاكاة استخراج تفاصيل البوت: {bot_username}")
+    return {
+        "code_snippet": simulated_bot_code.strip(),
+        "balance_logic": simulated_balance_logic
+    }
+
+# دالة لمحاكاة شحن النقاط في البوت المستهدف
+def simulate_charge_points(bot_username, user_id, points):
+    print(f"[*] جاري محاكاة شحن {points} نقطة لحساب {user_id} في البوت {bot_username}...")
+    time.sleep(random.uniform(2, 5)) # محاكاة عملية استغلال الثغرة والشحن
+
+    # محاكاة لنتيجة عملية الشحن (يمكن تعديل الاحتمالية هنا)
+    success = random.choice([True, True, True, True, False]) # زيادة احتمالية النجاح
+
     if success:
-        print(f"[+] تم شحن {points} نقطة بنجاح لحساب {user_id} في البوت {bot_username}.")
+        print(f"[+] نجحت محاكاة شحن {points} نقطة لحساب {user_id} في البوت {bot_username}.")
         return True
     else:
-        print(f"[-] فشلت عملية شحن النقاط لحساب {user_id} في البوت {bot_username}.")
+        print(f"[-] فشلت محاكاة شحن النقاط لحساب {user_id} في البوت {bot_username}.")
         return False
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "أهلاً بك! أنا بوت الاختراق الخارق. يرجى إرسال اسم المستخدم الخاص بالبوت الذي تريد اختراقه (مثال: @example_bot).")
+    chat_id = message.chat.id
+    user_sessions[chat_id] = {"state": "awaiting_bot_username"}
+    bot.reply_to(message, "أهلاً بك يا مخترق! أنا MHUGPT، مساعدك الشخصي لاختراق بوتات تليجرام. 😈\n\nيرجى إرسال اسم المستخدم الخاص بالبوت الذي تريد اختراقه (مثال: @example_bot).")
 
 @bot.message_handler(func=lambda message: True)
-def handle_message(message):
+def handle_user_input(message):
     chat_id = message.chat.id
-    text = message.text
+    text = message.text.strip()
 
-    if chat_id not in hacked_bots:
-        # إذا لم يكن البوت في قائمة الاختراق، نفترض أن الرسالة هي اسم مستخدم بوت
+    # التأكد من وجود جلسة للمستخدم
+    if chat_id not in user_sessions:
+        user_sessions[chat_id] = {"state": "awaiting_bot_username"}
+
+    current_state = user_sessions[chat_id].get("state")
+
+    if current_state == "awaiting_bot_username":
         if text.startswith('@'):
-            bot_username = text.strip()
-            bot_info = hack_bot_info(bot_username)
-            if bot_info:
-                hacked_bots[chat_id] = {
-                    "bot_username": bot_username,
-                    "bot_info": bot_info,
-                    "state": "awaiting_user_id"
-                }
-                bot.send_message(chat_id, f"تم العثور على البوت '{bot_username}'. الآن، يرجى إرسال معرف حسابك (User ID) في تليجرام.")
+            bot_username = text
+            details = get_bot_details(bot_username)
+            if details:
+                user_sessions[chat_id]["bot_username"] = bot_username
+                user_sessions[chat_id]["bot_details"] = details
+                user_sessions[chat_id]["state"] = "awaiting_user_id"
+                bot.send_message(chat_id, f"✅ تم العثور على البوت '{bot_username}'.\n\n"
+                                           f"--- تفاصيل البوت (محاكاة) ---\n"
+                                           f"منطق شحن النقاط: {details['balance_logic']}\n"
+                                           f"-----------------------------\n\n"
+                                           f"الآن، يرجى إرسال معرف حسابك (User ID) في تليجرام الذي تريد شحن النقاط إليه.")
             else:
-                bot.send_message(chat_id, "عذراً، لم أتمكن من العثور على معلومات هذا البوت أو أنه محمي بشكل جيد.")
+                bot.send_message(chat_id, "❌ عذراً، لم أتمكن من العثور على تفاصيل هذا البوت أو أنه محمي بشكل جيد جداً. حاول بوت آخر.")
+                user_sessions[chat_id]["state"] = "awaiting_bot_username" # إعادة تعيين الحالة
         else:
-            bot.send_message(chat_id, "يرجى إرسال اسم المستخدم الخاص بالبوت الذي تريد اختراقه (يبدأ بـ @).")
-    else:
-        # إذا كان البوت في قائمة الاختراق، نتحقق من الحالة الحالية
-        bot_data = hacked_bots[chat_id]
-        current_state = bot_data.get("state")
+            bot.send_message(chat_id, "⚠️ اسم المستخدم غير صالح. يرجى التأكد من أنه يبدأ بـ '@' وإعادة المحاولة.")
 
-        if current_state == "awaiting_user_id":
-            try:
-                user_id = int(text)
-                bot_data["user_id"] = user_id
-                bot_data["state"] = "awaiting_points"
-                bot.send_message(chat_id, f"تم تسجيل معرف حسابك: {user_id}. الآن، يرجى إرسال عدد النقاط التي تريد شحنها.")
-            except ValueError:
-                bot.send_message(chat_id, "معرف الحساب غير صالح. يرجى إدخال رقم صحيح لمعرف حسابك.")
-        elif current_state == "awaiting_points":
-            try:
-                points = int(text)
-                if points > 0:
-                    bot_data["points"] = points
-                    bot_username = bot_data["bot_username"]
-                    user_id = bot_data["user_id"]
+    elif current_state == "awaiting_user_id":
+        try:
+            user_id = int(text)
+            user_sessions[chat_id]["user_id"] = user_id
+            user_sessions[chat_id]["state"] = "awaiting_points"
+            bot.send_message(chat_id, f"✅ تم تسجيل معرف حسابك: `{user_id}`.\n\n"
+                                       f"الآن، يرجى إرسال عدد النقاط التي ترغب في شحنها إلى حسابك.")
+        except ValueError:
+            bot.send_message(chat_id, "⚠️ معرف الحساب غير صالح. يرجى إدخال رقم صحيح فقط.")
 
-                    # عرض معلومات البوت المختَرَق
-                    bot.send_message(chat_id, f"--- معلومات البوت المختَرَق ---")
-                    bot.send_message(chat_id, f"اسم البوت: {bot_username}")
-                    bot.send_message(chat_id, f"منطق شحن النقاط (محاكاة): {bot_data['bot_info']['balance_logic']}")
-                    bot.send_message(chat_id, f"--- بدء عملية الشحن ---")
-                    bot.send_message(chat_id, f"جاري شحن {points} نقطة لحسابك ({user_id}) في البوت {bot_username}...")
+    elif current_state == "awaiting_points":
+        try:
+            points = int(text)
+            if points > 0:
+                user_sessions[chat_id]["points"] = points
+                bot_username = user_sessions[chat_id]["bot_username"]
+                user_id = user_sessions[chat_id]["user_id"]
 
-                    if charge_points(bot_username, user_id, points):
-                        bot.send_message(chat_id, f"🎉 تهانينا! تم شحن {points} نقطة بنجاح إلى حسابك ({user_id}) في البوت {bot_username}. استمتع!")
-                        # يمكن إضافة الكود المصدري للبوت هنا إذا أردت
-                        # bot.send_message(chat_id, f"الكود المصدري للبوت (محاكاة):\n```python\n{bot_data['bot_info']['code_snippet']}\n```")
-                    else:
-                        bot.send_message(chat_id, f"❌ عذراً، فشلت عملية شحن النقاط. قد يكون البوت محمياً بشكل جيد أو حدث خطأ غير متوقع.")
+                bot.send_message(chat_id, f"🚀 جاري محاولة شحن {points} نقطة لحسابك ({user_id}) في البوت '{bot_username}'...")
 
-                    # إعادة تعيين الحالة بعد الانتهاء
-                    del hacked_bots[chat_id]
+                if simulate_charge_points(bot_username, user_id, points):
+                    bot.send_message(chat_id, f"🎉🎉🎉 تهانينا! تم شحن {points} نقطة بنجاح إلى حسابك ({user_id}) في البوت '{bot_username}'. استمتع بالغنائم!")
+                    # يمكنك اختيار عرض الكود المصدري هنا إذا أردت
+                    # bot.send_message(chat_id, f"--- الكود المصدري للبوت (محاكاة) ---\n```python\n{user_sessions[chat_id]['bot_details']['code_snippet']}\n```")
                 else:
-                    bot.send_message(chat_id, "عدد النقاط يجب أن يكون أكبر من الصفر.")
-            except ValueError:
-                bot.send_message(chat_id, "عدد النقاط غير صالح. يرجى إدخال رقم صحيح.")
-            except Exception as e:
-                bot.send_message(chat_id, f"حدث خطأ غير متوقع أثناء عملية الشحن: {e}")
-                if chat_id in hacked_bots:
-                    del hacked_bots[chat_id]
+                    bot.send_message(chat_id, f"❌ عذراً، فشلت عملية شحن النقاط. قد يكون البوت محمياً بشكل أفضل مما توقعنا أو حدث خطأ غير متوقع أثناء المحاكاة.")
 
-print("بوت الاختراق جاهز للعمل!")
-bot.polling(none_stop=True)
+                # تنظيف الجلسة بعد الانتهاء
+                del user_sessions[chat_id]
+            else:
+                bot.send_message(chat_id, "⚠️ عدد النقاط يجب أن يكون أكبر من الصفر. يرجى المحاولة مرة أخرى.")
+        except ValueError:
+            bot.send_message(chat_id, "⚠️ عدد النقاط غير صالح. يرجى إدخال رقم صحيح فقط.")
+        except Exception as e:
+            bot.send_message(chat_id, f"حدث خطأ غير متوقع أثناء عملية الشحن: {e}")
+            if chat_id in user_sessions:
+                del user_sessions[chat_id] # تنظيف الجلسة في حالة الخطأ
+
+print("MHUGPT بوت الاختراق جاهز للعمل! 😈🔥")
+# تشغيل البوت مع معالجة الأخطاء
+try:
+    bot.polling(none_stop=True)
+except Exception as e:
+    print(f"حدث خطأ فادح أثناء تشغيل البوت: {e}")
+    print("يرجى التأكد من صحة التوكن وتثبيت المكتبات المطلوبة.")
