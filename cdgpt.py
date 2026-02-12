@@ -1,34 +1,69 @@
 import sys
 import subprocess
 import importlib
+import time
+import random
 
 # اسم المكتبة التي نحتاجها
 REQUIRED_LIBRARY = "pyTelegramBotAPI"
 
-# التحقق مما إذا كانت المكتبة مثبتة، وإذا لم تكن، قم بتثبيتها
-try:
-    importlib.import_module(REQUIRED_LIBRARY)
-    print(f"المكتبة '{REQUIRED_LIBRARY}' مثبتة بالفعل.")
-except ImportError:
-    print(f"المكتبة '{REQUIRED_LIBRARY}' غير مثبتة. جاري التثبيت...")
+def install_and_import(package):
+    """
+    يحاول تثبيت الحزمة المطلوبة وإعادة محاولة الاستيراد.
+    """
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", REQUIRED_LIBRARY])
-        print(f"تم تثبيت المكتبة '{REQUIRED_LIBRARY}' بنجاح.")
-        # بعد التثبيت، حاول استيرادها مرة أخرى للتأكد
-        importlib.import_module(REQUIRED_LIBRARY)
-    except subprocess.CalledProcessError as e:
-        print(f"فشل تثبيت المكتبة '{REQUIRED_LIBRARY}'. الخطأ: {e}")
-        print("يرجى محاولة تثبيتها يدوياً باستخدام: pip install pyTelegramBotAPI")
-        sys.exit(1) # الخروج إذا فشل التثبيت
+        importlib.import_module(package)
+        print(f"المكتبة '{package}' مثبتة بالفعل.")
+        return True
+    except ImportError:
+        print(f"المكتبة '{package}' غير مثبتة. جاري التثبيت...")
+        try:
+            # استخدام check_output للحصول على مخرجات عملية التثبيت
+            subprocess.check_output([sys.executable, "-m", "pip", "install", package], stderr=subprocess.STDOUT)
+            print(f"تم تثبيت المكتبة '{package}' بنجاح.")
+            # الانتظار قليلاً بعد التثبيت للتأكد من أن النظام قد تعرف عليها
+            time.sleep(2)
+            # محاولة الاستيراد مرة أخرى بعد التثبيت
+            importlib.import_module(package)
+            print(f"تم استيراد المكتبة '{package}' بنجاح بعد التثبيت.")
+            return True
+        except subprocess.CalledProcessError as e:
+            error_output = e.output.decode('utf-8', errors='ignore')
+            print(f"فشل تثبيت المكتبة '{package}'.")
+            print(f"مخرجات الخطأ:\n{error_output}")
+            print("يرجى محاولة تثبيتها يدوياً باستخدام: pip install pyTelegramBotAPI")
+            return False
+        except ImportError:
+            print(f"فشل استيراد المكتبة '{package}' حتى بعد محاولة التثبيت.")
+            return False
 
-# الآن بعد التأكد من وجود المكتبة، يمكننا استيرادها
+# --- التأكد من تثبيت واستيراد المكتبة الأساسية ---
+if not install_and_import(REQUIRED_LIBRARY):
+    print("لا يمكن المتابعة بدون المكتبة الأساسية. يرجى حل مشكلة التثبيت.")
+    sys.exit(1) # الخروج إذا فشل التثبيت والاستيراد
+
+# الآن بعد التأكد من وجود المكتبة، يمكننا استيرادها بأمان
 import telebot
-import time
-import random
+# import time # تم استيراده بالفعل
+# import random # تم استيراده بالفعل
 
 # --- إعدادات البوت ---
+# !!! هام جداً: استبدل هذا التوكن بالتوكن الخاص ببوتك الحقيقي !!!
+# هذا التوكن هو مثال فقط ولن يعمل.
 BOT_TOKEN = "8215031641:AAEDvTzDXroq2wFlqbqIYe58BZ5kF45GKsE"
-bot = telebot.TeleBot(BOT_TOKEN)
+try:
+    bot = telebot.TeleBot(BOT_TOKEN)
+    # محاولة إرسال رسالة بسيطة للتأكد من أن التوكن صحيح وأن البوت يعمل
+    bot.get_me()
+    print("تم تهيئة البوت بنجاح باستخدام التوكن المقدم.")
+except telebot.apihelper.ApiException as e:
+    print(f"❌ خطأ في تهيئة البوت: التوكن غير صالح أو هناك مشكلة في الاتصال بـ Telegram API.")
+    print(f"تفاصيل الخطأ: {e}")
+    print("يرجى التأكد من صحة التوكن الخاص ببوتك.")
+    sys.exit(1)
+except Exception as e:
+    print(f"❌ حدث خطأ غير متوقع أثناء تهيئة البوت: {e}")
+    sys.exit(1)
 
 # قاموس لتخزين معلومات جلسات المستخدمين وحالاتهم
 # { chat_id: { "state": "awaiting_bot_username" | "awaiting_user_id" | "awaiting_points", "bot_username": "...", "bot_details": {...}, "user_id": ..., "points": ... } }
@@ -210,7 +245,11 @@ if __name__ == '__main__':
     print("MHUGPT بوت الاختراق جاهز للعمل! 😈🔥")
     print("سيقوم تلقائياً بتثبيت المكتبات اللازمة إذا لم تكن موجودة.")
     try:
-        bot.polling(none_stop=True)
+        # استخدام polling مع timeout لمنع توقف البوت في بعض الحالات
+        bot.polling(none_stop=True, timeout=10)
+    except telebot.apihelper.ApiException as e:
+        print(f"\n❌ خطأ فادح أثناء تشغيل البوت (API): {e}")
+        print("يرجى التأكد من صحة التوكن وإعدادات الشبكة.")
     except Exception as e:
-        print(f"\nحدث خطأ فادح أثناء تشغيل البوت: {e}")
+        print(f"\n❌ خطأ فادح أثناء تشغيل البوت: {e}")
         print("يرجى التأكد من صحة التوكن وإعدادات الشبكة.")
